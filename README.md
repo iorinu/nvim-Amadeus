@@ -14,6 +14,16 @@ Neovim 起動時に Steins;Gate の Amadeus 起動シーケンスっぽい GIF �
 
 著作権の関係でリポジトリには GIF を含めていないので、各自で用意してください (`.gitignore` 済み)。
 
+#### オリジナル生成スクリプト
+
+原作風のシアン×ブラック起動シーケンス GIF を Pillow で生成するスクリプトを同梱しています。著作権に触れない完全オリジナル素材です。
+
+```sh
+uv run scripts/generate_gif.py
+# 既定の出力先: ~/.config/nvim/amadeus.gif
+# 出力先を変えたい場合: uv run scripts/generate_gif.py /path/to/out.gif
+```
+
 動画から作る場合の参考 ffmpeg コマンド (3秒, 15fps, 幅640):
 
 ```sh
