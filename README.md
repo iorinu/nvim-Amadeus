@@ -1,22 +1,22 @@
 ## Amadeus
 
-Neovim 起動時に Steins;Gate の Amadeus 起動シーケンスっぽい動画を流すプラグイン。
+Neovim 起動時に Steins;Gate の Amadeus 起動シーケンスっぽい GIF を流すプラグイン。
 
 ### 必要環境
 
 - Kitty Graphics Protocol または Sixel に対応したターミナル (wezterm, kitty など)
 - [3rd/image.nvim](https://github.com/3rd/image.nvim) のセットアップ済み環境
+- ImageMagick (`magick` コマンド) — image.nvim が GIF 展開に使用
 
-### フレームの生成
+### GIF の用意
 
-動画ファイルを連番 PNG に変換して `video_frames/` に置く。3 秒分なら `-t 3`、15fps なら `-r 15` で 45 枚程度。
+プラグインルートに `amadeus.gif` を置く。`gif_path` オプションで任意の場所を指定することも可能。
+
+動画から作る場合の参考 ffmpeg コマンド (3秒, 15fps, 幅640):
 
 ```sh
-mkdir -p video_frames
-ffmpeg -i amadeus.mp4 -t 3 -r 15 -vf "scale=640:-1" video_frames/frame_%05d.png
+ffmpeg -i amadeus.mp4 -t 3 -vf "fps=15,scale=640:-1:flags=lanczos" amadeus.gif
 ```
-
-ファイル名は `frame_00000.png` から連番である必要がある (抜けがあるとそこで打ち切られる)。
 
 ### 設定例 (lazy.nvim)
 
@@ -25,8 +25,8 @@ ffmpeg -i amadeus.mp4 -t 3 -r 15 -vf "scale=640:-1" video_frames/frame_%05d.png
   "iorinu/nvim-Amadeus",
   dependencies = { "3rd/image.nvim" },
   opts = {
-    autoplay = true, -- nvim 起動時に自動再生
-    fps = 15,
+    autoplay = true,     -- nvim 起動時に自動再生
+    duration_ms = 3000,  -- 表示時間 (GIF はループするので明示的に閉じる)
     width = 80,
     height = 24,
   },
