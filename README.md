@@ -12,6 +12,8 @@ Neovim 起動時に Steins;Gate の Amadeus 起動シーケンスっぽい GIF �
 
 プラグインルートに `amadeus.gif` を置く。`gif_path` オプションで任意の場所を指定することも可能。
 
+著作権の関係でリポジトリには GIF を含めていないので、各自で用意してください (`.gitignore` 済み)。
+
 動画から作る場合の参考 ffmpeg コマンド (3秒, 15fps, 幅640):
 
 ```sh
