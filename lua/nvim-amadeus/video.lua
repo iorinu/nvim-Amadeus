@@ -96,6 +96,11 @@ function M.play(config)
       y = 0,
       width = width,
       height = height,
+      -- image.nvim のデフォルトは max_height_window_percentage=50 で、画像高さが
+      -- ウィンドウの 50% にキャップされる。フローティングウィンドウいっぱいに
+      -- 表示したいので 100% に上書きする。幅も同様に上限を外す。
+      max_width_window_percentage = 100,
+      max_height_window_percentage = 100,
     })
     if ok and img then table.insert(images, img) end
   end
