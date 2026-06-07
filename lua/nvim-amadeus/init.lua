@@ -39,6 +39,12 @@ function M.setup(opts)
     local play_once = function()
       if fired then return end
       fired = true
+      -- 引数付きで nvim を起動した場合 (例: `nvim hello.c`) は再生しない。
+      -- argc() はファイル引数の数。0 のときだけ「素の nvim 起動」とみなす。
+      -- stdin からの入力 (例: `cat foo | nvim -`) も除外したいので合わせて判定。
+      if vim.fn.argc() ~= 0 then return end
+      -- -es / -Es (silent ex mode) など UI のない起動でも出さない
+      if #vim.api.nvim_list_uis() == 0 then return end
       M.play()
     end
     vim.api.nvim_create_autocmd("VimEnter", {
