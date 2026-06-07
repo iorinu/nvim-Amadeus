@@ -87,11 +87,9 @@ function M.play(config)
   -- フレームを事前ロード。
   -- 理由: 再生中に from_file を呼ぶと I/O とデコードが入り、特に最初の数枚で
   -- カクつく。3秒×15fps = 45 枚程度ならメモリも問題にならない。
-  -- デバッグ目的で pcall は外し、エラーは notify で全部出す。
   images = {}
-  local load_errors = 0
   for _, path in ipairs(frame_paths) do
-    local ok, img_or_err = pcall(image.from_file, path, {
+    local ok, img = pcall(image.from_file, path, {
       window = win,
       buffer = buf,
       x = 0,
@@ -99,22 +97,11 @@ function M.play(config)
       width = width,
       height = height,
     })
-    if ok and img_or_err then
-      img_or_err.ignore_global_max_size = true
-      table.insert(images, img_or_err)
-    else
-      load_errors = load_errors + 1
-      if load_errors == 1 then
-        vim.notify("Amadeus from_file error: " .. tostring(img_or_err), vim.log.levels.ERROR)
-      end
+    if ok and img then
+      img.ignore_global_max_size = true
+      table.insert(images, img)
     end
   end
-
-  vim.notify(
-    string.format("Amadeus: loaded %d/%d frames (win=%d buf=%d)",
-      #images, #frame_paths, win or -1, buf or -1),
-    vim.log.levels.INFO
-  )
 
   if #images == 0 then
     vim.notify("Amadeus: フレームの読み込みに失敗", vim.log.levels.ERROR)
@@ -167,15 +154,7 @@ function M.play(config)
     end
     local img = images[current]
     if img then
-      -- 1 枚目だけは pcall を外して生エラーを surface する。
-      if current == 1 then
-        local ok, err = pcall(function() img:render() end)
-        if not ok then
-          vim.notify("Amadeus render error: " .. tostring(err), vim.log.levels.ERROR)
-        end
-      else
-        pcall(function() img:render() end)
-      end
+      pcall(function() img:render() end)
     end
     current = current + 1
     if current > #images then

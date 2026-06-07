@@ -26,15 +26,20 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
   -- autoplay が有効なら VimEnter で再生をスケジュール。
-  -- VimEnter 直後は UI 情報 (nvim_list_uis) がまだ不安定なことがあるので
-  -- vim.schedule で 1tick 遅らせる。
+  -- 注意: lazy.nvim 側で event = "VimEnter" 指定で遅延ロードしていると、setup() が
+  -- 走った時には既に VimEnter が発火済みで、ここで登録した autocmd は呼ばれない。
+  -- v:vim_did_enter で発火済みかを判定し、済みなら即時 play する。
   if M.config.autoplay then
-    vim.api.nvim_create_autocmd("VimEnter", {
-      group = vim.api.nvim_create_augroup("NvimAmadeusAutoplay", { clear = true }),
-      callback = function()
-        vim.schedule(function() M.play() end)
-      end,
-    })
+    if vim.v.vim_did_enter == 1 then
+      vim.schedule(function() M.play() end)
+    else
+      vim.api.nvim_create_autocmd("VimEnter", {
+        group = vim.api.nvim_create_augroup("NvimAmadeusAutoplay", { clear = true }),
+        callback = function()
+          vim.schedule(function() M.play() end)
+        end,
+      })
+    end
   end
 end
 
