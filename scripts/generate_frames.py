@@ -3,21 +3,22 @@
 # dependencies = ["Pillow"]
 # ///
 """
-Amadeus 風の起動シーケンス GIF を生成するスクリプト。
+Amadeus 風の起動シーケンスを PNG 連番として生成するスクリプト。
 
-なぜこのスクリプトがあるか:
-- 著作権の都合で実物の GIF はリポジトリに含められないため、各自で原作風の
+なぜ PNG 連番か:
+- image.nvim は GIF アニメーションをサポートしていない (kitty animation protocol の
+  定数定義はあるが実装が空) ため、プラグイン側でフレームを差し替えてアニメする。
+- 著作権の都合で実物素材はリポジトリに含められないため、各自で原作風の
   オリジナルアニメーションを生成できるようにするのが目的。
 - Pillow だけで完結するので uv 一発で実行可能 (依存をインラインで宣言)。
 
 使い方:
-  uv run scripts/generate_gif.py                              # ~/.config/nvim/amadeus.gif に出力
-  uv run scripts/generate_gif.py /path/to/output.gif          # 出力先を指定
+  uv run scripts/generate_frames.py                       # ~/.config/nvim/amadeus_frames/ に出力
+  uv run scripts/generate_frames.py /path/to/frames_dir   # 出力先を指定
 """
 
 from __future__ import annotations
 
-import math
 import os
 import random
 import sys
@@ -193,28 +194,23 @@ def render_frame(i: int) -> Image.Image:
 
 
 def main() -> None:
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / ".config/nvim/amadeus.gif"
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / ".config/nvim/amadeus_frames"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # 既存のフレームを掃除する。フレーム数が前回より少なくなった場合に
+    # 古いファイルが残ってしまうのを防ぐため。
+    for old in out_dir.glob("frame_*.png"):
+        old.unlink()
 
     # 乱数シードを固定して毎回同じ見た目になるように (再現性のため)。
     random.seed(42)
 
-    frames = [render_frame(i) for i in range(TOTAL_FRAMES)]
+    for i in range(TOTAL_FRAMES):
+        frame = render_frame(i)
+        path = out_dir / f"frame_{i:05d}.png"
+        frame.save(path, optimize=True)
 
-    # GIF として保存。
-    # duration はフレーム間隔 (ms)。1000/FPS で 1秒/FPS フレーム。
-    # loop=0 で無限ループ (どうせプラグイン側で duration_ms で止めるので関係ない)。
-    # optimize=True でパレット最適化。disposal=2 で前フレームをクリアして残像を防ぐ。
-    frames[0].save(
-        out,
-        save_all=True,
-        append_images=frames[1:],
-        duration=int(1000 / FPS),
-        loop=0,
-        optimize=True,
-        disposal=2,
-    )
-    print(f"wrote {out} ({len(frames)} frames, {DURATION_S}s @ {FPS}fps)")
+    print(f"wrote {TOTAL_FRAMES} frames to {out_dir} ({DURATION_S}s @ {FPS}fps)")
 
 
 if __name__ == "__main__":
