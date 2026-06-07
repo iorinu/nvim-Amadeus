@@ -25,21 +25,28 @@ end
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 
-  -- autoplay が有効なら VimEnter で再生をスケジュール。
-  -- 注意: lazy.nvim 側で event = "VimEnter" 指定で遅延ロードしていると、setup() が
-  -- 走った時には既に VimEnter が発火済みで、ここで登録した autocmd は呼ばれない。
-  -- v:vim_did_enter で発火済みかを判定し、済みなら即時 play する。
+  -- autoplay が有効なら再生をスケジュール。
+  -- ややこしい事情:
+  --   - 通常のロード (init.lua から直接 setup): VimEnter 前に setup される → autocmd で拾う
+  --   - lazy.nvim の event="VimEnter" 経由ロード: VimEnter コールバック中に setup される。
+  --     この時点では v:vim_did_enter はまだ 0 で、新しく登録した VimEnter autocmd は
+  --     今回の発火には間に合わない。次の event-loop tick で vim.schedule が拾う。
+  --   - lazy.nvim の cmd/keys 等で VimEnter 後にロード: vim.schedule が即時実行される。
+  -- 上記をすべてカバーするために、autocmd と vim.schedule を両方仕掛けて、
+  -- once フラグで二重再生を防ぐ。
   if M.config.autoplay then
-    if vim.v.vim_did_enter == 1 then
-      vim.schedule(function() M.play() end)
-    else
-      vim.api.nvim_create_autocmd("VimEnter", {
-        group = vim.api.nvim_create_augroup("NvimAmadeusAutoplay", { clear = true }),
-        callback = function()
-          vim.schedule(function() M.play() end)
-        end,
-      })
+    local fired = false
+    local play_once = function()
+      if fired then return end
+      fired = true
+      M.play()
     end
+    vim.api.nvim_create_autocmd("VimEnter", {
+      group = vim.api.nvim_create_augroup("NvimAmadeusAutoplay", { clear = true }),
+      once = true,
+      callback = function() vim.schedule(play_once) end,
+    })
+    vim.schedule(play_once)
   end
 end
 
