@@ -40,7 +40,8 @@ ffmpeg -i amadeus.mp4 -t 3 -vf "fps=15,scale=960:-1:flags=lanczos" amadeus_frame
   "iorinu/nvim-Amadeus",
   dependencies = { "3rd/image.nvim" },
   opts = {
-    autoplay = true,
+    -- autoplay は現状安定しないので既定 false。`:Amadeus` で手動再生する想定。
+    autoplay = false,
     fps = 15,
     width = 120,
     height = 34,
